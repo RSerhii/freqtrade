@@ -531,8 +531,8 @@ class Exchange:
                 data = self._api.fetch_ticker(pair)
                 try:
                     self._cached_ticker[pair] = {
-                        'bid': float(data['bid']),
-                        'ask': float(data['ask']),
+                        'bid': float(data['bid'] if data['bid'] != None else "inf"),
+                        'ask': float(data['ask'] if data['ask'] != None else 0),
                     }
                 except KeyError:
                     logger.debug("Could not cache ticker data for %s", pair)
@@ -626,7 +626,7 @@ class Exchange:
             # keeping parsed dataframe in cache
             self._klines[(pair, timeframe)] = parse_ticker_dataframe(
                 ticks, timeframe, pair=pair, fill_missing=True,
-                drop_incomplete=self._ohlcv_partial_candle)
+                drop_incomplete=self._ohlcv_partial_candle, exchange=self.id)
         return tickers
 
     def _now_is_time_to_refresh(self, pair: str, timeframe: str) -> bool:
@@ -651,8 +651,9 @@ class Exchange:
                 pair, timeframe, since_ms, s
             )
 
+            limit = None if self.id != "southxchange" else self._config["exchange"]["_ft_has_params"]["ohlcv_candle_limit"]
             data = await self._api_async.fetch_ohlcv(pair, timeframe=timeframe,
-                                                     since=since_ms)
+                                                     since=since_ms, limit=limit)
 
             # Because some exchange sort Tickers ASC and other DESC.
             # Ex: Bittrex returns a list of tickers ASC (oldest first, newest last)
