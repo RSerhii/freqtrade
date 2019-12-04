@@ -531,8 +531,8 @@ class Exchange:
                 data = self._api.fetch_ticker(pair)
                 try:
                     self._cached_ticker[pair] = {
-                        'bid': float(data['bid'] if data['bid'] != None else "inf"),
-                        'ask': float(data['ask'] if data['ask'] != None else 0),
+                        'bid': float(data['bid']),
+                        'ask': float(data['ask']),
                     }
                 except KeyError:
                     logger.debug("Could not cache ticker data for %s", pair)
