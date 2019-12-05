@@ -380,6 +380,7 @@ class FreqtradeBot:
                 logger.warning('Unable to fetch order %s: %s', order_id, exception)
                 if self.exchange.id == 'southxchange':
                     order_status = 'closed'
+                    order['status'] = 'closed'
                     order['cost'] = stake_amount
                     order['price'] = buy_limit_requested
                     order['amount'] = amount
@@ -499,7 +500,7 @@ class FreqtradeBot:
         if order_amount is None:
             order_amount = order['amount']
         # Only run for closed orders
-        if trade.fee_open == 0 or order['status'] == 'open':
+        if trade.fee_open == 0 or order.get('status', None) == 'open':
             return order_amount
 
         # use fee from order-dict if possible
