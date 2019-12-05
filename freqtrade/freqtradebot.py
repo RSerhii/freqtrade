@@ -373,6 +373,17 @@ class FreqtradeBot:
         order_id = order['id']
         order_status = order.get('status', None)
 
+        if order_status is None:
+            try:
+                order = self.exchange.get_order(order_id, pair_s)
+            except (RequestException, DependencyException, InvalidOrderException)  as exception:
+                logger.warning('Unable to fetch order %s: %s', order_id, exception)
+                if self.exchange.id == 'southxchange':
+                    order_status = 'closed'
+                    order['cost'] = stake_amount
+                    order['price'] = buy_limit_requested
+                    order['amount'] = amount
+
         # we assume the order is executed at the price requested
         buy_limit_filled_price = buy_limit_requested
 
@@ -540,9 +551,13 @@ class FreqtradeBot:
             logger.info('Found open order for %s', trade)
             try:
                 order = action_order or self.exchange.get_order(trade.open_order_id, trade.pair)
-            except InvalidOrderException as exception:
+            except (RequestException, DependencyException, InvalidOrderException) as exception:
                 logger.warning('Unable to fetch order %s: %s', trade.open_order_id, exception)
+                if trade.exchange == 'southxchange':
+                    trade.close(trade.open_rate)
+                    Trade.session.flush()
                 return
+
             # Try update amount (binance-fix)
             try:
                 new_amount = self.get_real_amount(trade, order)
@@ -784,6 +799,9 @@ class FreqtradeBot:
                     'Cannot query order for %s due to %s',
                     trade,
                     traceback.format_exc())
+                if trade.exchange == 'southxchange':
+                    trade.close(trade.open_rate)
+                    Trade.session.flush()
                 continue
 
             # Check if trade is still actually open
@@ -921,6 +939,15 @@ class FreqtradeBot:
                                    amount=trade.amount, rate=limit,
                                    time_in_force=self.strategy.order_time_in_force['sell']
                                    )
+        order_id = order['id']
+        if order.get('status', None) is None:
+            try:
+                order = self.exchange.get_order(order_id, trade.pair)
+            except (RequestException, DependencyException, InvalidOrderException)  as exception:
+                logger.warning('Unable to fetch order %s: %s', order_id, exception)
+                if self.exchange.id == 'southxchange':
+                    order['status'] = 'closed'
+                return
 
         trade.open_order_id = order['id']
         trade.close_rate_requested = limit
