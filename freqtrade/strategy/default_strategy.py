@@ -26,10 +26,10 @@ class DefaultStrategy(IStrategy):
     }
 
     # Optimal stoploss designed for the strategy
-    stoploss = -0.10
+    stoploss = -0.5
 
     # Optimal ticker interval for the strategy
-    ticker_interval = '5m'
+    ticker_interval = '1m'
 
     # Optional order type mapping
     order_types = {

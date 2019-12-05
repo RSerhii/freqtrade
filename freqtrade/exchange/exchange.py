@@ -116,7 +116,7 @@ class Exchange:
             self._load_markets()
 
             # Check if all pairs are available
-            self.validate_pairs(config['exchange']['pair_whitelist'])
+            # self.validate_pairs(config['exchange']['pair_whitelist'])
             self.validate_ordertypes(config.get('order_types', {}))
             self.validate_order_time_in_force(config.get('order_time_in_force', {}))
             self.validate_required_startup_candles(config.get('startup_candle_count', 0))
@@ -150,6 +150,7 @@ class Exchange:
             'secret': exchange_config.get('secret'),
             'password': exchange_config.get('password'),
             'uid': exchange_config.get('uid', ''),
+            'user': exchange_config.get('user', '')
         }
         if ccxt_kwargs:
             logger.info('Applying additional ccxt config: %s', ccxt_kwargs)
@@ -288,7 +289,7 @@ class Exchange:
     def get_valid_pair_combination(self, curr_1, curr_2) -> str:
         """
         Get valid pair combination of curr_1 and curr_2 by trying both combinations.
-        """
+        """        
         for pair in [f"{curr_1}/{curr_2}", f"{curr_2}/{curr_1}"]:
             if pair in self.markets and self.markets[pair].get('active'):
                 return pair
@@ -298,18 +299,19 @@ class Exchange:
         """
         Checks if ticker interval from config is a supported timeframe on the exchange
         """
-        if not hasattr(self._api, "timeframes") or self._api.timeframes is None:
-            # If timeframes attribute is missing (or is None), the exchange probably
-            # has no fetchOHLCV method.
-            # Therefore we also show that.
-            raise OperationalException(
-                f"The ccxt library does not provide the list of timeframes "
-                f"for the exchange \"{self.name}\" and this exchange "
-                f"is therefore not supported. ccxt fetchOHLCV: {self.exchange_has('fetchOHLCV')}")
+        # if not hasattr(self._api, "timeframes") or self._api.timeframes is None:
+        #     # If timeframes attribute is missing (or is None), the exchange probably
+        #     # has no fetchOHLCV method.
+        #     # Therefore we also show that.
+        #     raise OperationalException(
+        #         f"The ccxt library does not provide the list of timeframes "
+        #         f"for the exchange \"{self.name}\" and this exchange "
+        #         f"is therefore not supported. ccxt fetchOHLCV: {self.exchange_has('fetchOHLCV')}")
 
-        if timeframe and (timeframe not in self.timeframes):
-            raise OperationalException(
-                f"Invalid ticker interval '{timeframe}'. This exchange supports: {self.timeframes}")
+        # if timeframe and (timeframe not in self.timeframes):
+        #     raise OperationalException(
+        #         f"Invalid ticker interval '{timeframe}'. This exchange supports: {self.timeframes}")
+        pass
 
     def validate_ordertypes(self, order_types: Dict) -> None:
         """

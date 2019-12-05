@@ -346,7 +346,7 @@ class FreqtradeBot:
         :param pair: pair for which we want to create a LIMIT_BUY
         :return: None
         """
-        pair_s = pair.replace('_', '/')
+        pair_s = pair.replace('_', '/') if self.exchange.id != 'birake' else pair
         stake_currency = self.config['stake_currency']
         fiat_currency = self.config.get('fiat_display_currency', None)
         time_in_force = self.strategy.order_time_in_force['buy']
