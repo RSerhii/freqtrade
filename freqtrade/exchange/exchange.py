@@ -116,7 +116,7 @@ class Exchange:
             self._load_markets()
 
             # Check if all pairs are available
-            # self.validate_pairs(config['exchange']['pair_whitelist'])
+            self.validate_pairs(config['exchange']['pair_whitelist'])
             self.validate_ordertypes(config.get('order_types', {}))
             self.validate_order_time_in_force(config.get('order_time_in_force', {}))
             self.validate_required_startup_candles(config.get('startup_candle_count', 0))
@@ -289,7 +289,7 @@ class Exchange:
     def get_valid_pair_combination(self, curr_1, curr_2) -> str:
         """
         Get valid pair combination of curr_1 and curr_2 by trying both combinations.
-        """        
+        """
         for pair in [f"{curr_1}/{curr_2}", f"{curr_2}/{curr_1}"]:
             if pair in self.markets and self.markets[pair].get('active'):
                 return pair

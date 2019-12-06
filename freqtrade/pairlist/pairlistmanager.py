@@ -48,10 +48,7 @@ class PairListManager():
                                      pairlist_pos=len(self._pairlists)
                                      ).pairlist
             self._tickers_needed = pairl.needstickers or self._tickers_needed
-            self._pairlists.append(pairl)
-
-
-        
+            self._pairlists.append(pairl)        
 
         if not self._pairlists:
             raise OperationalException("No Pairlist defined!")
