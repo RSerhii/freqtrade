@@ -310,7 +310,7 @@ class RPC:
             else:
                 try:
                     pair = self._freqtrade.exchange.get_valid_pair_combination(coin, "BTC")
-                    if pair.startswith("BTC"):
+                    if pair.startswith("BTC/"):
                         rate = 1.0 / self._freqtrade.get_sell_rate(pair, False)
                     else:
                         rate = self._freqtrade.get_sell_rate(pair, False)
