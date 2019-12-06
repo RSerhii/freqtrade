@@ -218,7 +218,7 @@ class FreqtradeBot:
             )
         else:
             stake_amount = self.config['stake_amount']
-
+        self.wallets.update()
         available_amount = self.wallets.get_free(self.config['stake_currency'])
 
         if stake_amount == constants.UNLIMITED_STAKE_AMOUNT:
@@ -573,11 +573,9 @@ class FreqtradeBot:
             logger.debug('Using order book to get sell rate')
 
             order_book = self.exchange.get_order_book(pair, 1)
-            rate = order_book['bids'][0][0]
-
-        else:
-            rate = self.exchange.get_ticker(pair, refresh)['bid']
-        return rate
+            if len(order_book['bids']) > 0:
+                return order_book['bids'][0][0]
+        return self.exchange.get_ticker(pair, refresh)['bid']
 
     def handle_trade(self, trade: Trade) -> bool:
         """
