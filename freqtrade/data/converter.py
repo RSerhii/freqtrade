@@ -74,8 +74,6 @@ def ohlcv_fill_up_missing_data(dataframe: DataFrame, timeframe: str, pair: str, 
     }
     ticker_minutes = timeframe_to_minutes(timeframe)
 
-    if exchange == 'southxchange':
-        return dataframe
     # Resample to create "NAN" values
     df = dataframe.resample(f'{ticker_minutes}min', on='date').agg(ohlc_dict)
 

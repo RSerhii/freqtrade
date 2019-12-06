@@ -385,6 +385,8 @@ class FreqtradeBot:
             order['type'] = 'limit'
             order['is_open'] = True
             order['filled'] = 0
+        
+        if order.get('fee', None) is None:
             order['fee'] = {'cost': fee, 'currency': pair_s[:pair_s.find('/')]}
 
         order_record = Order(
@@ -980,7 +982,9 @@ class FreqtradeBot:
             order['type'] = 'limit'
             order['is_open'] = True
             order['filled'] = 0
-            order['fee'] = {'cost': fee, 'currency': pair_s[:pair_s.find('/')]}
+
+        if order.get('fee', None) is None:
+            order['fee'] = {'cost': fee, 'currency': trade.pair[:trade.pair.find('/')]}
 
         order_record = Order(
             oid=order_id,
