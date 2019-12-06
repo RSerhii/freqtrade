@@ -374,7 +374,7 @@ class FreqtradeBot:
         order_id = order['id']
         order_status = order.get('status', None)
 
-        fee = self.exchange._api.calculate_fee(symbol=pair_s, type='', side='', amount=amount, price=buy_limit_requested, takerOrMaker='taker')['cost']
+        fee = self.exchange._api.calculate_fee(symbol=pair_s, type='', side='', amount=amount, price=buy_limit_requested, takerOrMaker='taker')
 
         if order_status is None:
             order['status'] = 'open'
@@ -387,7 +387,7 @@ class FreqtradeBot:
             order['filled'] = 0
         
         if order.get('fee', None) is None:
-            order['fee'] = {'cost': fee, 'currency': pair_s[:pair_s.find('/')]}
+            order['fee'] = fee
 
         order_record = Order(
             oid=order_id,
@@ -522,7 +522,7 @@ class FreqtradeBot:
         if order_amount is None:
             order_amount = order['amount']
         # Only run for closed orders
-        if trade.fee_open == 0 or order.get('status', None) == 'open':
+        if trade.fee_open == 0 or order['status'] == 'open':
             return order_amount
 
         # use fee from order-dict if possible
@@ -971,7 +971,7 @@ class FreqtradeBot:
                                    time_in_force=self.strategy.order_time_in_force['sell'])
         order_id = order['id']
         
-        fee = self.exchange._api.calculate_fee(symbol=trade.pair, type='', side='', amount=trade.amount, price=limit, takerOrMaker='maker')['cost']
+        fee = self.exchange._api.calculate_fee(symbol=trade.pair, type='', side='', amount=trade.amount, price=limit, takerOrMaker='maker')
 
         if order.get('status', None) is None:
             order['status'] = 'open'
@@ -984,7 +984,7 @@ class FreqtradeBot:
             order['filled'] = 0
 
         if order.get('fee', None) is None:
-            order['fee'] = {'cost': fee, 'currency': trade.pair[:trade.pair.find('/')]}
+            order['fee'] = fee
 
         order_record = Order(
             oid=order_id,
