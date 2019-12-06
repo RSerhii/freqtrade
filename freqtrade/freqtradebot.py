@@ -218,7 +218,7 @@ class FreqtradeBot:
             )
         else:
             stake_amount = self.config['stake_amount']
-
+        self.wallets.update()
         available_amount = self.wallets.get_free(self.config['stake_currency'])
 
         if stake_amount == constants.UNLIMITED_STAKE_AMOUNT:
