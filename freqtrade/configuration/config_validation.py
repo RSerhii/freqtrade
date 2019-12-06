@@ -42,7 +42,7 @@ def validate_config_schema(conf: Dict[str, Any]) -> Dict[str, Any]:
     :return: Returns the config if valid, otherwise throw an exception
     """
     try:
-        # FreqtradeValidator(constants.CONF_SCHEMA).validate(conf)
+        FreqtradeValidator(constants.CONF_SCHEMA).validate(conf)
         return conf
     except ValidationError as e:
         logger.critical(

@@ -299,19 +299,21 @@ class Exchange:
         """
         Checks if ticker interval from config is a supported timeframe on the exchange
         """
-        # if not hasattr(self._api, "timeframes") or self._api.timeframes is None:
-        #     # If timeframes attribute is missing (or is None), the exchange probably
-        #     # has no fetchOHLCV method.
-        #     # Therefore we also show that.
-        #     raise OperationalException(
-        #         f"The ccxt library does not provide the list of timeframes "
-        #         f"for the exchange \"{self.name}\" and this exchange "
-        #         f"is therefore not supported. ccxt fetchOHLCV: {self.exchange_has('fetchOHLCV')}")
+        if self.id == 'birake':
+            return
+        if not hasattr(self._api, "timeframes") or self._api.timeframes is None:
+            # If timeframes attribute is missing (or is None), the exchange probably
+            # has no fetchOHLCV method.
+            # Therefore we also show that.
+            raise OperationalException(
+                f"The ccxt library does not provide the list of timeframes "
+                f"for the exchange \"{self.name}\" and this exchange "
+                f"is therefore not supported. ccxt fetchOHLCV: {self.exchange_has('fetchOHLCV')}")
 
-        # if timeframe and (timeframe not in self.timeframes):
-        #     raise OperationalException(
-        #         f"Invalid ticker interval '{timeframe}'. This exchange supports: {self.timeframes}")
-        pass
+        if timeframe and (timeframe not in self.timeframes):
+            raise OperationalException(
+                f"Invalid ticker interval '{timeframe}'. This exchange supports: {self.timeframes}")
+        
 
     def validate_ordertypes(self, order_types: Dict) -> None:
         """
