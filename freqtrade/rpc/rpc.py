@@ -11,12 +11,16 @@ from typing import Any, Dict, List, Optional, Tuple
 import arrow
 from numpy import NAN, mean
 
-from freqtrade import DependencyException, TemporaryError
+
+from requests.exceptions import RequestException
+from freqtrade import DependencyException, TemporaryError, InvalidOrderException
 from freqtrade.misc import shorten_date
 from freqtrade.persistence import Trade
 from freqtrade.rpc.fiat_convert import CryptoToFiatConverter
 from freqtrade.state import State
 from freqtrade.strategy.interface import SellType
+
+from freqtrade.persistence import Order
 
 logger = logging.getLogger(__name__)
 
@@ -120,7 +124,7 @@ class RPC:
                     try:
                         order = self._freqtrade.exchange.get_order(trade.open_order_id, trade.pair)
                     except (RequestException, DependencyException, InvalidOrderException) as exception:
-                        logger.warning('Cannot query order for %s: %s', trade.open_order_id, exception)
+                        logger.info('Cannot query order for %s: %s', trade.open_order_id, exception)
                         order_record = Order.get_order(trade.open_order_id)
                         if order_record is None:
                             logger.warning('Unable find order in cache %s', trade.open_order_id)
@@ -320,7 +324,7 @@ class RPC:
             else:
                 try:
                     pair = self._freqtrade.exchange.get_valid_pair_combination(coin, "BTC")
-                    if pair.startswith("BTC"):
+                    if pair.startswith("BTC/"):
                         rate = 1.0 / self._freqtrade.get_sell_rate(pair, False)
                     else:
                         rate = self._freqtrade.get_sell_rate(pair, False)
@@ -394,7 +398,7 @@ class RPC:
                 try:
                     order = self._freqtrade.exchange.get_order(trade.open_order_id, trade.pair)
                 except (RequestException, DependencyException, InvalidOrderException) as exception:
-                    logger.warning('Cannot query order for %s: %s', trade.open_order_id, exception)
+                    logger.info('Cannot query order for %s: %s', trade.open_order_id, exception)
                     order_record = Order.get_order(trade.open_order_id)
                     if order_record is None:
                         logger.warning('Unable find order in cache %s', trade.open_order_id)
