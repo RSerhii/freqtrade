@@ -190,10 +190,16 @@ class Order(_DECL_BASE):
     cost = Column(Float, nullable=False, default=0.0)
     amount = Column(Float, nullable=False, default=0.0)
     filled = Column(Float, nullable=False, default=0.0)
+    remaining = Column(Float, nullable=False, default=0.0)
 
     def close_order(self):
         self.is_open = False
         self.status = 'closed'
+        self.remaining = 0
+        Order.session.flush()
+
+    def set_remaining(self, remaining):
+        self.remaining = remaining
         Order.session.flush()
 
     def to_dict(self):
@@ -210,7 +216,8 @@ class Order(_DECL_BASE):
             'filled': self.filled,
             'cost': self.cost,
             'is_open': self.is_open,
-            'exchange': self.exchange
+            'exchange': self.exchange,
+            'remaining': self.remaining
         }
 
     @staticmethod

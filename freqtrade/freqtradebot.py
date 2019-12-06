@@ -396,7 +396,8 @@ class FreqtradeBot:
             fee=order.get('fee', None),
             cost=order.get('cost', stake_amount),
             amount=order.get('amount', amount),
-            filled=order.get('filled', 0)
+            filled=order.get('filled', 0),
+            remaining=amount
         )
         Order.session.add(order_record)
         Order.session.flush()
@@ -563,15 +564,16 @@ class FreqtradeBot:
         Checks trades with open orders and updates the amount if necessary
         """
         order = None
+        order_record = Order.get_order(trade.open_order_id)
         # Get order details for actual price per unit
         if trade.open_order_id:
             # Update trade with order values
             logger.info('Found open order for %s', trade)
             try:
                 order = self.exchange.get_order(trade.open_order_id, trade.pair)
+                order_record.set_remaining(order['remaining'])
             except (RequestException, DependencyException, InvalidOrderException) as exception:
                 logger.warning('Unable to fetch order %s: %s', trade.open_order_id, exception)
-                order_record = Order.get_order(trade.open_order_id)
                 if order_record is None:
                     logger.warning('Unable find order in cache %s', trade.open_order_id)
                     return
@@ -811,13 +813,15 @@ class FreqtradeBot:
         """
 
         for trade in Trade.get_open_order_trades():
+            order = None
+            order_record = Order.get_order(trade.open_order_id)
             try:
                 if not trade.open_order_id:
                     continue
                 order = self.exchange.get_order(trade.open_order_id, trade.pair)
+                order_record.set_remaining(order['remaining'])
             except (RequestException, DependencyException, InvalidOrderException) as exception:
                 logger.warning('Cannot query order for %s: %s', trade.open_order_id, exception)
-                order_record = Order.get_order(trade.open_order_id)
                 if order_record is None:
                     logger.warning('Unable find order in cache %s', trade.open_order_id)
                     continue
@@ -983,7 +987,8 @@ class FreqtradeBot:
             fee=order.get('fee', None),
             cost=order.get('cost', limit * trade.amount),
             amount=order.get('amount', trade.amount),
-            filled=order.get('filled', 0)
+            filled=order.get('filled', 0),
+            remaining=amount
         )
         Order.session.add(order_record)
         Order.session.flush()
