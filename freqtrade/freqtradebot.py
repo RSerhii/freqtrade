@@ -570,6 +570,7 @@ class FreqtradeBot:
             logger.info('Found open order for %s', trade)
             try:
                 order = self.exchange.get_order(trade.open_order_id, trade.pair)
+                order_record.set_remaining(order['remaining'])
             except (RequestException, DependencyException) as exception:
                 logger.warning('Unable to fetch order %s: %s', trade.open_order_id, exception)
             except InvalidOrderException as exception:
