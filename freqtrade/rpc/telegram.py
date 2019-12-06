@@ -173,8 +173,8 @@ class Telegram(RPC):
 
         else:
             raise NotImplementedError('Unknown message type: {}'.format(msg['type']))
-
-        self._send_msg(message)
+        tmp = message.replace('_', '/')
+        self._send_msg(tmp)
 
     @authorized_only
     def _status(self, update: Update, context: CallbackContext) -> None:
@@ -606,7 +606,7 @@ class Telegram(RPC):
                     ['/count', '/start', '/stop', '/help']]
 
         reply_markup = ReplyKeyboardMarkup(keyboard)
-
+        msg = msg.replace('_', '/')
         try:
             try:
                 self._updater.bot.send_message(

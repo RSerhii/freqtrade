@@ -56,6 +56,10 @@ def init(db_url: str, clean_open_orders: bool = False) -> None:
     # We should use the scoped_session object - not a seperately initialized version
     Trade.session = scoped_session(sessionmaker(bind=engine, autoflush=True, autocommit=True))
     Trade.query = Trade.session.query_property()
+
+    Order.session = scoped_session(sessionmaker(bind=engine, autoflush=True, autocommit=True))
+    Order.query = Order.session.query_property()
+
     _DECL_BASE.metadata.create_all(engine)
     check_migrate(engine)
 
@@ -155,6 +159,7 @@ def cleanup() -> None:
     :return: None
     """
     Trade.session.flush()
+    Order.session.flush()
 
 
 def clean_dry_run_db() -> None:
@@ -167,6 +172,65 @@ def clean_dry_run_db() -> None:
         if 'dry_run' in trade.open_order_id:
             trade.open_order_id = None
 
+class Order(_DECL_BASE):
+    """
+    Class used to define a order structure
+    """
+    __tablename__ = 'orders'
+    id = Column(Integer, primary_key=True)
+    oid = Column(String, nullable=False)
+    exchange = Column(String, nullable=False)
+    pair = Column(String, nullable=False, index=True)
+    side = Column(String, nullable=False, index=True)
+    status = Column(String, nullable=False, index=True)
+    type = Column(String, nullable=False, index=True)
+    is_open = Column(Boolean, nullable=False, default=True, index=True)
+    price = Column(Float)
+    fee = Column(Float, nullable=True)
+    fee_currency = Column(String, nullable=True)
+    cost = Column(Float, nullable=False, default=0.0)
+    amount = Column(Float, nullable=False, default=0.0)
+    filled = Column(Float, nullable=False, default=0.0)
+    remaining = Column(Float, nullable=False, default=0.0)
+
+    def close_order(self):
+        self.is_open = False
+        self.status = 'closed'
+        self.remaining = 0
+        Order.session.flush()
+
+    def set_remaining(self, remaining):
+        self.remaining = remaining
+        Order.session.flush()
+
+    def to_dict(self):
+        return {
+            'id': self.oid,
+            'status': self.status,
+            'symbol': self.pair,
+            'pair': self.pair,
+            'type': self.type,
+            'side': self.side,
+            'price': self.price,
+            'amount': self.amount,
+            'fee': { 
+                'cost': self.fee,
+                'currency': self.fee_currency
+            },
+            'filled': self.filled,
+            'cost': self.cost,
+            'is_open': self.is_open,
+            'exchange': self.exchange,
+            'remaining': self.remaining
+        }
+
+    @staticmethod
+    def get_order(oid):
+        """
+        Get best pair with closed trade.
+        """
+        order = Order.session.query(Order).filter(Order.oid == oid).first()
+        return order
 
 class Trade(_DECL_BASE):
     """

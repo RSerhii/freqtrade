@@ -150,6 +150,7 @@ class Exchange:
             'secret': exchange_config.get('secret'),
             'password': exchange_config.get('password'),
             'uid': exchange_config.get('uid', ''),
+            'user': exchange_config.get('user', '')
         }
         if ccxt_kwargs:
             logger.info('Applying additional ccxt config: %s', ccxt_kwargs)
@@ -298,6 +299,8 @@ class Exchange:
         """
         Checks if ticker interval from config is a supported timeframe on the exchange
         """
+        if self.id == 'birake':
+            return
         if not hasattr(self._api, "timeframes") or self._api.timeframes is None:
             # If timeframes attribute is missing (or is None), the exchange probably
             # has no fetchOHLCV method.
@@ -310,6 +313,7 @@ class Exchange:
         if timeframe and (timeframe not in self.timeframes):
             raise OperationalException(
                 f"Invalid ticker interval '{timeframe}'. This exchange supports: {self.timeframes}")
+        
 
     def validate_ordertypes(self, order_types: Dict) -> None:
         """
@@ -626,7 +630,7 @@ class Exchange:
             # keeping parsed dataframe in cache
             self._klines[(pair, timeframe)] = parse_ticker_dataframe(
                 ticks, timeframe, pair=pair, fill_missing=True,
-                drop_incomplete=self._ohlcv_partial_candle)
+                drop_incomplete=self._ohlcv_partial_candle, exchange=self.id)
         return tickers
 
     def _now_is_time_to_refresh(self, pair: str, timeframe: str) -> bool:
@@ -651,8 +655,9 @@ class Exchange:
                 pair, timeframe, since_ms, s
             )
 
+            limit = None if self.id != "southxchange" else self._config["exchange"]["_ft_has_params"]["ohlcv_candle_limit"]
             data = await self._api_async.fetch_ohlcv(pair, timeframe=timeframe,
-                                                     since=since_ms)
+                                                     since=since_ms, limit=limit)
 
             # Because some exchange sort Tickers ASC and other DESC.
             # Ex: Bittrex returns a list of tickers ASC (oldest first, newest last)

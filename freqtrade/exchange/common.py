@@ -69,7 +69,6 @@ BAD_EXCHANGES = {
         'negociecoins',
         'nova',
         'paymium',
-        'southxchange',
         'stronghold',
         'surbitcoin',
         'therock',

@@ -11,12 +11,16 @@ from typing import Any, Dict, List, Optional, Tuple
 import arrow
 from numpy import NAN, mean
 
-from freqtrade import DependencyException, TemporaryError
+
+from requests.exceptions import RequestException
+from freqtrade import DependencyException, TemporaryError, InvalidOrderException
 from freqtrade.misc import shorten_date
 from freqtrade.persistence import Trade
 from freqtrade.rpc.fiat_convert import CryptoToFiatConverter
 from freqtrade.state import State
 from freqtrade.strategy.interface import SellType
+
+from freqtrade.persistence import Order
 
 logger = logging.getLogger(__name__)
 
@@ -117,7 +121,17 @@ class RPC:
             for trade in trades:
                 order = None
                 if trade.open_order_id:
-                    order = self._freqtrade.exchange.get_order(trade.open_order_id, trade.pair)
+                    try:
+                        order = self._freqtrade.exchange.get_order(trade.open_order_id, trade.pair)
+                    except (RequestException, DependencyException, InvalidOrderException) as exception:
+                        logger.info('Cannot query order for %s: %s', trade.open_order_id, exception)
+                        order_record = Order.get_order(trade.open_order_id)
+                        if order_record is None:
+                            logger.warning('Unable find order in cache %s', trade.open_order_id)
+                            continue
+                        if self._freqtrade.exchange.id == 'southxchange' or self._freqtrade.exchange.id == 'birake':
+                            order_record.close_order()
+                        order = order_record.to_dict()
                 # calculate profit and send message to user
                 try:
                     current_rate = self._freqtrade.get_sell_rate(trade.pair, False)
@@ -381,7 +395,17 @@ class RPC:
         def _exec_forcesell(trade: Trade) -> None:
             # Check if there is there is an open order
             if trade.open_order_id:
-                order = self._freqtrade.exchange.get_order(trade.open_order_id, trade.pair)
+                try:
+                    order = self._freqtrade.exchange.get_order(trade.open_order_id, trade.pair)
+                except (RequestException, DependencyException, InvalidOrderException) as exception:
+                    logger.info('Cannot query order for %s: %s', trade.open_order_id, exception)
+                    order_record = Order.get_order(trade.open_order_id)
+                    if order_record is None:
+                        logger.warning('Unable find order in cache %s', trade.open_order_id)
+                        return
+                    if self._freqtrade.exchange.id == 'southxchange' or self._freqtrade.exchange.id == 'birake':
+                        order_record.close_order()
+                    order = order_record.to_dict()
 
                 # Cancel open LIMIT_BUY orders and close trade
                 if order and order['status'] == 'open' \

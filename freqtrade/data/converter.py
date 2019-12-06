@@ -12,7 +12,7 @@ logger = logging.getLogger(__name__)
 
 def parse_ticker_dataframe(ticker: list, timeframe: str, pair: str, *,
                            fill_missing: bool = True,
-                           drop_incomplete: bool = True) -> DataFrame:
+                           drop_incomplete: bool = True, exchange: str = None) -> DataFrame:
     """
     Converts a ticker-list (format ccxt.fetch_ohlcv) to a Dataframe
     :param ticker: ticker list, as returned by exchange.async_get_candle_history
@@ -52,12 +52,12 @@ def parse_ticker_dataframe(ticker: list, timeframe: str, pair: str, *,
         logger.debug('Dropping last candle')
 
     if fill_missing:
-        return ohlcv_fill_up_missing_data(frame, timeframe, pair)
+        return ohlcv_fill_up_missing_data(frame, timeframe, pair, exchange)
     else:
         return frame
 
 
-def ohlcv_fill_up_missing_data(dataframe: DataFrame, timeframe: str, pair: str) -> DataFrame:
+def ohlcv_fill_up_missing_data(dataframe: DataFrame, timeframe: str, pair: str, exchange: str = None) -> DataFrame:
     """
     Fills up missing data with 0 volume rows,
     using the previous close as price for "open", "high" "low" and "close", volume is set to 0
@@ -73,6 +73,7 @@ def ohlcv_fill_up_missing_data(dataframe: DataFrame, timeframe: str, pair: str) 
         'volume': 'sum'
     }
     ticker_minutes = timeframe_to_minutes(timeframe)
+
     # Resample to create "NAN" values
     df = dataframe.resample(f'{ticker_minutes}min', on='date').agg(ohlc_dict)
 

@@ -68,10 +68,10 @@ CONF_SCHEMA = {
     'properties': {
         'max_open_trades': {'type': 'integer', 'minimum': -1},
         'ticker_interval': {'type': 'string', 'enum': TIMEFRAMES},
-        'stake_currency': {'type': 'string', 'enum': ['BTC', 'XBT', 'ETH', 'USDT', 'EUR', 'USD']},
+        'stake_currency': {'type': 'string', 'enum': ['BTC', 'XBT', 'ETH', 'USDT', 'EUR', 'USD', 'TELOS']},
         'stake_amount': {
             "type": ["number", "string"],
-            "minimum": 0.0005,
+            "minimum": 0.0001,
             "pattern": UNLIMITED_STAKE_AMOUNT
         },
         'fiat_display_currency': {'type': 'string', 'enum': SUPPORTED_FIAT},
@@ -231,7 +231,7 @@ CONF_SCHEMA = {
                     'type': 'array',
                     'items': {
                         'type': 'string',
-                        'pattern': '^[0-9A-Z]+/[0-9A-Z]+$'
+                        'pattern': '^[0-9A-Z]+[/_]+[0-9A-Z]+$'
                     },
                     'uniqueItems': True
                 },
