@@ -374,6 +374,8 @@ class FreqtradeBot:
         order_id = order['id']
         order_status = order.get('status', None)
 
+        fee = self.exchange._api.calculate_fee(symbol=pair_s, type='', side='', amount=amount, price=buy_limit_requested, takerOrMaker='taker')['cost']
+
         if order_status is None:
             order['status'] = 'open'
             order['cost'] = stake_amount
@@ -383,6 +385,7 @@ class FreqtradeBot:
             order['type'] = 'limit'
             order['is_open'] = True
             order['filled'] = 0
+            order['fee'] = {'cost': fee, 'currency': pair_s[:pair_s.find('/')]}
 
         order_record = Order(
             oid=order_id,
@@ -447,7 +450,6 @@ class FreqtradeBot:
         })
 
         # Fee is applied twice because we make a LIMIT_BUY and LIMIT_SELL
-        fee = self.exchange.get_fee(symbol=pair, taker_or_maker='maker')
         trade = Trade(
             pair=pair,
             stake_amount=stake_amount,
@@ -464,7 +466,7 @@ class FreqtradeBot:
         )
 
         # Update fees if order is closed
-        if order_status == 'closed':
+        if order_status == 'closed' or self.exchange.id == 'southxchange' or self.exchange.id == 'birake':
             self.update_trade_state(trade, order)
 
         Trade.session.add(trade)
@@ -966,6 +968,8 @@ class FreqtradeBot:
                                    amount=trade.amount, rate=limit,
                                    time_in_force=self.strategy.order_time_in_force['sell'])
         order_id = order['id']
+        
+        fee = self.exchange._api.calculate_fee(symbol=trade.pair, type='', side='', amount=trade.amount, price=limit, takerOrMaker='maker')['cost']
 
         if order.get('status', None) is None:
             order['status'] = 'open'
@@ -976,6 +980,7 @@ class FreqtradeBot:
             order['type'] = 'limit'
             order['is_open'] = True
             order['filled'] = 0
+            order['fee'] = {'cost': fee, 'currency': pair_s[:pair_s.find('/')]}
 
         order_record = Order(
             oid=order_id,
@@ -991,7 +996,7 @@ class FreqtradeBot:
             cost=order.get('cost', limit * trade.amount),
             amount=order.get('amount', trade.amount),
             filled=order.get('filled', 0),
-            remaining=amount
+            remaining=trade.amount
         )
         Order.session.add(order_record)
         Order.session.flush()
