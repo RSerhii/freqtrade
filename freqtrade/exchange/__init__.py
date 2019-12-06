@@ -17,3 +17,4 @@ from freqtrade.exchange.kraken import Kraken  # noqa: F401
 from freqtrade.exchange.binance import Binance  # noqa: F401
 from freqtrade.exchange.bibox import Bibox  # noqa: F401
 from freqtrade.exchange.birake import Birake  # noqa: F401
+from freqtrade.exchange.southxchange import Southxchange # noqa: F401
