@@ -219,7 +219,7 @@ class FreqtradeBot:
             )
         else:
             stake_amount = self.config['stake_amount']
-
+        self.wallets.update()
         available_amount = self.wallets.get_free(self.config['stake_currency'])
 
         if stake_amount == constants.UNLIMITED_STAKE_AMOUNT:
@@ -374,6 +374,8 @@ class FreqtradeBot:
         order_id = order['id']
         order_status = order.get('status', None)
 
+        fee = self.exchange._api.calculate_fee(symbol=pair_s, type='', side='', amount=amount, price=buy_limit_requested, takerOrMaker='taker')
+
         if order_status is None:
             order['status'] = 'open'
             order['cost'] = stake_amount
@@ -383,6 +385,9 @@ class FreqtradeBot:
             order['type'] = 'limit'
             order['is_open'] = True
             order['filled'] = 0
+        
+        if order.get('fee', None) is None:
+            order['fee'] = fee
 
         order_record = Order(
             oid=order_id,
@@ -397,7 +402,8 @@ class FreqtradeBot:
             fee_currency=order.get('fee', None)['currency'],
             cost=order.get('cost', stake_amount),
             amount=order.get('amount', amount),
-            filled=order.get('filled', 0)
+            filled=order.get('filled', 0),
+            remaining=amount
         )
         Order.session.add(order_record)
         Order.session.flush()
@@ -446,13 +452,12 @@ class FreqtradeBot:
         })
 
         # Fee is applied twice because we make a LIMIT_BUY and LIMIT_SELL
-        fee = self.exchange.get_fee(symbol=pair, taker_or_maker='maker')
         trade = Trade(
             pair=pair,
             stake_amount=stake_amount,
             amount=amount,
-            fee_open=fee,
-            fee_close=fee,
+            fee_open=fee['cost'],
+            fee_close=fee['cost'],
             open_rate=buy_limit_filled_price,
             open_rate_requested=buy_limit_requested,
             open_date=datetime.utcnow(),
@@ -463,7 +468,7 @@ class FreqtradeBot:
         )
 
         # Update fees if order is closed
-        if order_status == 'closed':
+        if order_status == 'closed' or self.exchange.id == 'southxchange' or self.exchange.id == 'birake':
             self.update_trade_state(trade, order)
 
         Trade.session.add(trade)
@@ -517,7 +522,7 @@ class FreqtradeBot:
         if order_amount is None:
             order_amount = order['amount']
         # Only run for closed orders
-        if trade.fee_open == 0 or order.get('status', None) == 'open':
+        if trade.fee_open == 0 or order['status'] == 'open':
             return order_amount
 
         # use fee from order-dict if possible
@@ -564,6 +569,7 @@ class FreqtradeBot:
         Checks trades with open orders and updates the amount if necessary
         """
         order = None
+        order_record = Order.get_order(trade.open_order_id)
         # Get order details for actual price per unit
         if trade.open_order_id:
             # Update trade with order values
@@ -575,7 +581,6 @@ class FreqtradeBot:
                 logger.warning('Unable to fetch order %s: %s', trade.open_order_id, exception)
             except InvalidOrderException as exception:
                 logger.warning('Unable to fetch order %s: %s', trade.open_order_id, exception)
-                order_record = Order.get_order(trade.open_order_id)
                 if order_record is None:
                     logger.warning('Unable find order in cache %s', trade.open_order_id)
                     return
@@ -613,11 +618,9 @@ class FreqtradeBot:
             logger.debug('Using order book to get sell rate')
 
             order_book = self.exchange.get_order_book(pair, 1)
-            rate = order_book['bids'][0][0]
-
-        else:
-            rate = self.exchange.get_ticker(pair, refresh)['bid']
-        return rate
+            if len(order_book['bids']) > 0:
+                return order_book['bids'][0][0]
+        return self.exchange.get_ticker(pair, refresh)['bid']
 
     def handle_trade(self, trade: Trade) -> bool:
         """
@@ -815,13 +818,15 @@ class FreqtradeBot:
         """
 
         for trade in Trade.get_open_order_trades():
+            order = None
+            order_record = Order.get_order(trade.open_order_id)
             try:
                 if not trade.open_order_id:
                     continue
                 order = self.exchange.get_order(trade.open_order_id, trade.pair)
+                order_record.set_remaining(order['remaining'])
             except (RequestException, DependencyException, InvalidOrderException) as exception:
                 logger.warning('Cannot query order for %s: %s', trade.open_order_id, exception)
-                order_record = Order.get_order(trade.open_order_id)
                 if order_record is None:
                     logger.warning('Unable find order in cache %s', trade.open_order_id)
                     continue
@@ -964,6 +969,8 @@ class FreqtradeBot:
                                    amount=trade.amount, rate=limit,
                                    time_in_force=self.strategy.order_time_in_force['sell'])
         order_id = order['id']
+        
+        fee = self.exchange._api.calculate_fee(symbol=trade.pair, type='', side='', amount=trade.amount, price=limit, takerOrMaker='maker')
 
         if order.get('status', None) is None:
             order['status'] = 'open'
@@ -974,6 +981,9 @@ class FreqtradeBot:
             order['type'] = 'limit'
             order['is_open'] = True
             order['filled'] = 0
+
+        if order.get('fee', None) is None:
+            order['fee'] = fee
 
         order_record = Order(
             oid=order_id,
@@ -988,7 +998,8 @@ class FreqtradeBot:
             fee_currency=order.get('fee', None)['currency'],
             cost=order.get('cost', limit * trade.amount),
             amount=order.get('amount', trade.amount),
-            filled=order.get('filled', 0)
+            filled=order.get('filled', 0),
+            remaining=trade.amount
         )
         Order.session.add(order_record)
         Order.session.flush()

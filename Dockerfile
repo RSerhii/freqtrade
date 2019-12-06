@@ -1,7 +1,7 @@
 FROM python:3.7.5-slim-stretch
 
 RUN apt-get update \
-    && apt-get -y install curl build-essential libssl-dev \
+    && apt-get -y install curl build-essential libssl-dev git \
     && apt-get clean \
     && pip install --upgrade pip
 

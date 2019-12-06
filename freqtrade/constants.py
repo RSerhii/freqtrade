@@ -72,6 +72,7 @@ CONF_SCHEMA = {
         'stake_amount': {
             "type": ["number", "string"],
             "minimum": 0.0002,
+
             "pattern": UNLIMITED_STAKE_AMOUNT
         },
         'fiat_display_currency': {'type': 'string', 'enum': SUPPORTED_FIAT},
