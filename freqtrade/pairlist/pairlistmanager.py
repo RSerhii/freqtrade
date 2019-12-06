@@ -22,6 +22,18 @@ class PairListManager():
         self._config = config
         self._whitelist = self._config['exchange'].get('pair_whitelist')
         self._blacklist = self._config['exchange'].get('pair_blacklist', [])
+
+        if exchange.id == 'birake':
+            white_list = []
+            for pair in self._whitelist:
+                white_list.append(pair.replace('/', '_'))
+            self._whitelist = white_list
+
+            black_list = []
+            for pair in self._blacklist:
+                black_list.append(pair.replace('/', '_'))
+            self._blacklist = black_list
+
         self._pairlists: List[IPairList] = []
         self._tickers_needed = False
         for pl in self._config.get('pairlists', None):
@@ -36,7 +48,7 @@ class PairListManager():
                                      pairlist_pos=len(self._pairlists)
                                      ).pairlist
             self._tickers_needed = pairl.needstickers or self._tickers_needed
-            self._pairlists.append(pairl)
+            self._pairlists.append(pairl)        
 
         if not self._pairlists:
             raise OperationalException("No Pairlist defined!")

@@ -129,7 +129,7 @@ class RPC:
                         if order_record is None:
                             logger.warning('Unable find order in cache %s', trade.open_order_id)
                             continue
-                        if self._freqtrade.exchange.id == 'southxchange':
+                        if self._freqtrade.exchange.id == 'southxchange' or self._freqtrade.exchange.id == 'birake':
                             order_record.close_order()
                         order = order_record.to_dict()
                 # calculate profit and send message to user
@@ -403,7 +403,7 @@ class RPC:
                     if order_record is None:
                         logger.warning('Unable find order in cache %s', trade.open_order_id)
                         return
-                    if self._freqtrade.exchange.id == 'southxchange':
+                    if self._freqtrade.exchange.id == 'southxchange' or self._freqtrade.exchange.id == 'birake':
                         order_record.close_order()
                     order = order_record.to_dict()
 

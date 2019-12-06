@@ -187,6 +187,7 @@ class Order(_DECL_BASE):
     is_open = Column(Boolean, nullable=False, default=True, index=True)
     price = Column(Float)
     fee = Column(Float, nullable=True)
+    fee_currency = Column(String, nullable=True)
     cost = Column(Float, nullable=False, default=0.0)
     amount = Column(Float, nullable=False, default=0.0)
     filled = Column(Float, nullable=False, default=0.0)
@@ -212,7 +213,10 @@ class Order(_DECL_BASE):
             'side': self.side,
             'price': self.price,
             'amount': self.amount,
-            'fee': self.fee,
+            'fee': { 
+                'cost': self.fee,
+                'currency': self.fee_currency
+            },
             'filled': self.filled,
             'cost': self.cost,
             'is_open': self.is_open,

@@ -150,6 +150,7 @@ class Exchange:
             'secret': exchange_config.get('secret'),
             'password': exchange_config.get('password'),
             'uid': exchange_config.get('uid', ''),
+            'user': exchange_config.get('user', '')
         }
         if ccxt_kwargs:
             logger.info('Applying additional ccxt config: %s', ccxt_kwargs)
@@ -298,6 +299,8 @@ class Exchange:
         """
         Checks if ticker interval from config is a supported timeframe on the exchange
         """
+        if self.id == 'birake':
+            return
         if not hasattr(self._api, "timeframes") or self._api.timeframes is None:
             # If timeframes attribute is missing (or is None), the exchange probably
             # has no fetchOHLCV method.
@@ -310,6 +313,7 @@ class Exchange:
         if timeframe and (timeframe not in self.timeframes):
             raise OperationalException(
                 f"Invalid ticker interval '{timeframe}'. This exchange supports: {self.timeframes}")
+        
 
     def validate_ordertypes(self, order_types: Dict) -> None:
         """
