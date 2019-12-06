@@ -393,7 +393,8 @@ class FreqtradeBot:
             type=order.get('type', 'limit'),
             is_open=True,
             price=order.get('price', buy_limit_requested),
-            fee=order.get('fee', None),
+            fee=order.get('fee', None)['cost'],
+            fee_currency=order.get('fee', None)['currency'],
             cost=order.get('cost', stake_amount),
             amount=order.get('amount', amount),
             filled=order.get('filled', 0)
@@ -575,9 +576,10 @@ class FreqtradeBot:
                 if order_record is None:
                     logger.warning('Unable find order in cache %s', trade.open_order_id)
                     return
-                if self.exchange.id == 'southxchange':
+                if self.exchange.id == 'southxchange' or self.exchange.id == 'birake':
                     order_record.close_order()
                 order = order_record.to_dict()
+                order['fee'] 
 
             # Try update amount (binance-fix)
             try:
@@ -821,7 +823,7 @@ class FreqtradeBot:
                 if order_record is None:
                     logger.warning('Unable find order in cache %s', trade.open_order_id)
                     continue
-                if self.exchange.id == 'southxchange':
+                if self.exchange.id == 'southxchange' or self.exchange.id == 'birake':
                     order_record.close_order()
                 order = order_record.to_dict()
 
@@ -980,7 +982,8 @@ class FreqtradeBot:
             type=order.get('type', 'limit'),
             is_open=True,
             price=order.get('price', limit),
-            fee=order.get('fee', None),
+            fee=order.get('fee', None)['cost'],
+            fee_currency=order.get('fee', None)['currency'],
             cost=order.get('cost', limit * trade.amount),
             amount=order.get('amount', trade.amount),
             filled=order.get('filled', 0)
