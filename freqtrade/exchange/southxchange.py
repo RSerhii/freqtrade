@@ -23,8 +23,6 @@ class Southxchange(Exchange):
             return
 
         for pair in pairs:
-            # Note: ccxt has BaseCurrency/QuoteCurrency format for pairs
-            # TODO: add a support for having coins in BTC/USDT format
             if self.markets and pair not in self.markets:
                 raise OperationalException(
                     f"Pair {pair} is not available on {self.name}. "
