@@ -71,7 +71,7 @@ CONF_SCHEMA = {
         'stake_currency': {'type': 'string', 'enum': ['BTC', 'XBT', 'ETH', 'USDT', 'EUR', 'USD', 'TELOS']},
         'stake_amount': {
             "type": ["number", "string"],
-            "minimum": 0.0002,
+            "minimum": 0.0001,
 
             "pattern": UNLIMITED_STAKE_AMOUNT
         },
